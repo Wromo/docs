@@ -1,0 +1,73 @@
+---
+import ArticleNavigationButton from './ArticleNavigationButton.wromo';
+import FallbackNotice from '../FallbackNotice.wromo';
+import TableOfContents from '../RightSidebar/TableOfContents';
+import { getNav, useTranslations } from "../../i18n/util";
+import { getLanguageFromURL } from '../../util';
+
+const { content, currentPage, isFallback } = Wromo.props;
+const title = content.title;
+const headers = content.wromo?.headers;
+const lang = getLanguageFromURL(Wromo.canonicalURL.pathname);
+const links = (await getNav(Wromo)).filter((x) => !('header' in x) && x.slug) as { text: string; slug: string; }[];
+const index = links.findIndex((x) => currentPage.includes(x.slug));
+const makeLinkItem = ({ text, slug }) => ({ text, link: `/${lang}/${slug}/` });
+let next, previous;
+if (index > 0) previous = makeLinkItem(links[index - 1]);
+if (index !== -1 && index < links.length - 1) next = makeLinkItem(links[index + 1]);
+const t = useTranslations(Wromo);
+---
+
+<article id="article" class="content">
+	<section class="main-section">
+		<h1 class="content-title" id="overview" set:html={title} />
+		{isFallback && <FallbackNotice />}
+		{headers && (
+			<nav class="block lg-hidden">
+				<TableOfContents
+					client:media="(max-width: 50em)"
+					headers={headers}
+					labels={{ onThisPage: t('rightSidebar.onThisPage'), overview: t('rightSidebar.overview') }}
+				/>
+			</nav>
+		)}
+		<slot />
+	</section>
+	{(previous || next) && (
+		<aside class="next-previous-nav">
+			{previous && <ArticleNavigationButton rel="prev" item={previous} />}
+			{next && <ArticleNavigationButton rel="next" item={next} />}
+		</aside>
+	)}
+</article>
+
+<style>
+	.content {
+		padding: 0;
+		max-width: 75ch;
+		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		margin: auto;
+	}
+	.content > section {
+		margin-bottom: 4rem;
+	}
+	.block {
+		display: block;
+	}
+	.next-previous-nav {
+		display: flex;
+		flex-wrap: wrap;
+		width: auto;
+		gap: 1rem;
+		margin-bottom: 1.5rem;
+	}
+
+	@media (min-width: 72em) {
+		.lg-hidden {
+			display: none;
+		}
+	}
+</style>

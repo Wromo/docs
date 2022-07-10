@@ -1,0 +1,90 @@
+---
+import Sponsors from './Sponsors.wromo';
+import { removeLeadingSlash, removeTrailingSlash } from '../../util';
+import { getNav, useTranslations } from "../../i18n/util";
+import SidebarContent from './SidebarContent.wromo';
+import SidebarToggleTabGroup from '../TabGroup/SidebarToggleTabGroup';
+import CommunityMenu from "../RightSidebar/CommunityMenu.wromo";
+import ThemeToggleButton from "../Header/ThemeToggleButton";
+
+export interface Props {
+	currentPage: string;
+}
+
+const t = useTranslations(Wromo);
+
+const { currentPage } = Wromo.props as Props;
+const currentPageMatch = removeLeadingSlash(removeTrailingSlash(currentPage));
+
+// Group nav menu by sections to properly render.
+const sidebarSections = (await getNav(Wromo)).reduce((collection, item) => {
+	if ('header' in item) {
+		collection.push({ ...item, children: [] });
+	} else {
+		collection[collection.length - 1].children.push(item);
+	}
+	return collection;
+}, [] as Parameters<typeof SidebarContent>[0]['sidebarSections']);
+
+const learnSections = sidebarSections.filter((section) => section.type === 'learn');
+const apiSections = sidebarSections.filter((section) => section.type === 'api');
+let activeTab: 'learn' | 'api' = 'learn';
+for (const section of sidebarSections) {
+	if (section.children.some((item) => currentPageMatch.includes(item.slug))) {
+		activeTab = section.type;
+	}
+}
+---
+
+<nav aria-label={t('leftSidebar.a11yTitle')}>
+	<SidebarToggleTabGroup 
+		client:load 
+		defaultActiveTab={activeTab} 
+		labels={{ learn: t('leftSidebar.learnTab'), api: t('leftSidebar.referenceTab') }}
+	/>
+	<ul class={`nav-groups`}>
+		<SidebarContent type={'learn'} defaultActiveTab={activeTab} sidebarSections={learnSections} {currentPageMatch} />
+		<SidebarContent type={'api'} defaultActiveTab={activeTab} sidebarSections={apiSections} {currentPageMatch} />
+		<CommunityMenu hideOnLargerScreens={true} />
+		<li style="text-align: center;">
+			<ThemeToggleButton 
+				client:visible 
+				labels={{  useLight: t('themeToggle.useLight'), useDark: t('themeToggle.useDark')  }} 
+			/>
+		</li>
+		<li>
+			<Sponsors />
+		</li>
+	</ul>
+</nav>
+
+<script>
+	window.addEventListener('DOMContentLoaded', () => {
+		var target = document.querySelector('[aria-current="page"]');
+		// 120 is the rounded height of the header + learn/reference tab.
+		if (target && target.offsetTop > window.innerHeight - 120) {
+			// 50 is the rounded height of a menu item.
+			document.querySelector('.nav-groups').scrollTop = target.scrollTop + target.offsetTop - 50;
+		}
+	});
+</script>
+
+<style>
+	nav {
+		width: 100%;
+		margin-inline-end: 1rem;
+		padding-top: 0rem;
+	}
+	.nav-groups {
+		height: 100%;
+		overflow-x: visible;
+		overflow-y: auto;
+		max-height: calc(100vh - var(--theme-navbar-height));
+	}
+
+	@media not screen and (min-width: 50em) {
+		nav :global(.TabGroup) {
+			display: none;
+		}
+	}
+</style>

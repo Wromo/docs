@@ -1,0 +1,9 @@
+---
+import Aside from './Aside.wromo';
+import UIString from './UIString.wromo';
+---
+
+<Aside>
+	<UIString key="fallbackContent.notice" />
+	<a href="https://github.com/Wromo/docs/blob/main/src/i18n#readme"><UIString key="fallbackContent.linkText" /></a>
+</Aside>

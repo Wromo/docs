@@ -1,0 +1,46 @@
+---
+import TableOfContents from './TableOfContents';
+import ContributeMenu from './ContributeMenu.wromo';
+import CommunityMenu from './CommunityMenu.wromo';
+import { useTranslations } from "../../i18n/util";
+
+const t = useTranslations(Wromo);
+
+const { content, githubEditUrl } = Wromo.props;
+const headers = content.wromo?.headers;
+---
+
+<nav class="sidebar-nav" aria-label={t('rightSidebar.a11yTitle')}>
+	<div class="sidebar-nav-inner">
+		{headers && (
+			<TableOfContents
+				client:media="(min-width: 50em)"
+				headers={headers}
+				labels={{ onThisPage: t('rightSidebar.onThisPage'), overview: t('rightSidebar.overview') }}
+			/>
+		)}
+		<ContributeMenu editHref={githubEditUrl} />
+		<CommunityMenu />
+	</div>
+</nav>
+
+<style>
+	.sidebar-nav {
+		width: 100%;
+		position: sticky;
+		top: 0;
+	}
+
+	.sidebar-nav-inner {
+		height: 100%;
+		padding: var(--doc-padding) 0;
+		overflow: auto;
+	}
+
+	/* style applied only on Firefox, this avoids scrollbars overlapping. */
+	@supports (-moz-appearance: none) {
+		.sidebar-nav {
+			padding-inline-end: 1.5rem;
+		}
+	}
+</style>

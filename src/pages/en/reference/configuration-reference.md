@@ -1,0 +1,383 @@
+---
+# NOTE: This file is auto-generated from 'scripts/docgen.mjs'
+# Do not make edits to it directly, they will be overwritten.
+
+layout: ~/layouts/MainLayout.wromo
+title: Configuration Reference
+i18nReady: true
+setup: |
+  import Since from '../../../components/Since.wromo';
+---
+
+The following reference covers all supported configuration options in Wromo. To learn more about configuring Wromo, read our guide on [Configuring Wromo](/en/guides/configuring-wromo/).
+
+```js
+// wromo.config.mjs
+import { defineConfig } from 'wromo/config'
+
+export default defineConfig({
+  // your configuration options here...
+})
+```
+## Top-Level Options
+
+### root
+
+<p>
+
+**Type:** `string`<br>
+**CLI:** `--root`<br>
+**Default:** `"."` (current working directory)
+</p>
+
+You should only provide this option if you run the `wromo` CLI commands in a directory other than the project root directory. Usually, this option is provided via the CLI instead of the [Wromo config file](/en/guides/configuring-wromo/#supported-config-file-types), since Wromo needs to know your project root before it can locate your config file.
+
+If you provide a relative path (ex: `--root: './my-project'`) Wromo will resolve it against your current working directory.
+
+#### Examples
+
+```js
+{
+  root: './my-project-directory'
+}
+```
+```bash
+$ wromo build --root ./my-project-directory
+```
+
+
+### srcDir
+
+<p>
+
+**Type:** `string`<br>
+**Default:** `"./src"`
+</p>
+
+Set the directory that Wromo will read your site from.
+
+The value can be either an absolute file system path or a path relative to the project root.
+
+```js
+{
+  srcDir: './www'
+}
+```
+
+
+### publicDir
+
+<p>
+
+**Type:** `string`<br>
+**Default:** `"./public"`
+</p>
+
+Set the directory for your static assets. Files in this directory are served at `/` during dev and copied to your build directory during build. These files are always served or copied as-is, without transform or bundling.
+
+The value can be either an absolute file system path or a path relative to the project root.
+
+```js
+{
+  publicDir: './my-custom-publicDir-directory'
+}
+```
+
+
+### outDir
+
+<p>
+
+**Type:** `string`<br>
+**Default:** `"./dist"`
+</p>
+
+Set the directory that `wromo build` writes your final build to.
+
+The value can be either an absolute file system path or a path relative to the project root.
+
+```js
+{
+  outDir: './my-custom-build-directory'
+}
+```
+
+
+### site
+
+<p>
+
+**Type:** `string`
+</p>
+
+Your final, deployed URL. Wromo uses this full URL to generate your sitemap and canonical URLs in your final build. It is strongly recommended that you set this configuration to get the most out of Wromo.
+
+```js
+{
+  site: 'https://www.my-site.dev'
+}
+```
+
+
+### base
+
+<p>
+
+**Type:** `string`
+</p>
+
+The base path you're deploying to. Wromo will match this pathname during development so that your development experience matches your build environment as closely as possible. In the example below, `wromo dev` will start your server at `/docs`.
+
+```js
+{
+  base: '/docs'
+}
+```
+
+
+### trailingSlash
+
+<p>
+
+**Type:** `'always' | 'never' | 'ignore'`<br>
+**Default:** `'ignore'`
+</p>
+
+Set the route matching behavior of the dev server. Choose from the following options:
+  - `'always'` - Only match URLs that include a trailing slash (ex: "/foo/")
+  - `'never'` - Never match URLs that include a trailing slash (ex: "/foo")
+  - `'ignore'` - Match URLs regardless of whether a trailing "/" exists
+
+Use this configuration option if your production host has strict handling of how trailing slashes work or do not work.
+
+You can also set this if you prefer to be more strict yourself, so that URLs with or without trailing slashes won't work during development.
+
+```js
+{
+  // Example: Require a trailing slash during development
+  trailingSlash: 'always'
+}
+```
+**See Also:**
+- buildOptions.pageUrlFormat
+
+
+## Build Options
+
+### build.format
+
+<p>
+
+**Type:** `('file' | 'directory')`<br>
+**Default:** `'directory'`
+</p>
+
+Control the output file format of each page.
+  - If 'file', Wromo will generate an HTML file (ex: "/foo.html") for each page.
+  - If 'directory', Wromo will generate a directory with a nested `index.html` file (ex: "/foo/index.html") for each page.
+
+```js
+{
+  build: {
+    // Example: Generate `page.html` instead of `page/index.html` during build.
+    format: 'file'
+  }
+}
+```
+
+
+## Server Options
+
+Customize the Wromo dev server, used by both `wromo dev` and `wromo preview`.
+
+```js
+{
+  server: { port: 1234, host: true}
+}
+```
+
+To set different configuration based on the command run ("dev", "preview") a function can also be passed to this configuration option.
+
+```js
+{
+  // Example: Use the function syntax to customize based on command
+  server: (command) => ({ port: command === 'dev' ? 3000 : 4000 })
+}
+```
+
+### server.host
+
+<p>
+
+**Type:** `string | boolean`<br>
+**Default:** `false`<br>
+<Since v="0.24.0" />
+</p>
+
+Set which network IP addresses the server should listen on (i.e. non-localhost IPs).
+- `false` - do not expose on a network IP address
+- `true` - listen on all addresses, including LAN and public addresses
+- `[custom-address]` - expose on a network IP address at `[custom-address]` (ex: `192.168.0.1`)
+
+
+### server.port
+
+<p>
+
+**Type:** `number`<br>
+**Default:** `3000`
+</p>
+
+Set which port the server should listen on.
+
+If the given port is already in use, Wromo will automatically try the next available port.
+
+```js
+{
+  server: { port: 8080 }
+}
+```
+
+
+## Markdown Options
+
+### markdown.drafts
+
+<p>
+
+**Type:** `boolean`<br>
+**Default:** `false`
+</p>
+
+Control if markdown draft pages should be included in the build.
+
+A markdown page is considered a draft if it includes `draft: true` in its front matter. Draft pages are always included & visible during development (`wromo dev`) but by default they will not be included in your final build.
+
+```js
+{
+  markdown: {
+    // Example: Include all drafts in your final build
+    drafts: true,
+  }
+}
+```
+
+
+### markdown.shikiConfig
+
+<p>
+
+**Type:** `Partial<ShikiConfig>`
+</p>
+
+Shiki configuration options. See [the markdown configuration docs](/en/guides/markdown-content/#shiki-configuration) for usage.
+
+
+### markdown.syntaxHighlight
+
+<p>
+
+**Type:** `'shiki' | 'prism' | false`<br>
+**Default:** `shiki`
+</p>
+
+Which syntax highlighter to use, if any.
+- `shiki` - use the [Shiki](https://github.com/shikijs/shiki) highlighter
+- `prism` - use the [Prism](https://prismjs.com/) highlighter
+- `false` - do not apply syntax highlighting.
+
+```js
+{
+  markdown: {
+    // Example: Switch to use prism for syntax highlighting in Markdown
+    syntaxHighlight: 'prism',
+  }
+}
+```
+
+
+### markdown.remarkPlugins
+
+<p>
+
+**Type:** `RemarkPlugins`
+</p>
+
+Pass a custom [Remark](https://github.com/remarkjs/remark) plugin to customize how your Markdown is built.
+
+**Note:** Enabling custom `remarkPlugins` or `rehypePlugins` removes Wromo's built-in support for [GitHub-flavored Markdown](https://github.github.com/gfm/) support and [Smartypants](https://github.com/silvenon/remark-smartypants). You must explicitly add these plugins to your `wromo.config.mjs` file, if desired.
+
+```js
+{
+  markdown: {
+    // Example: The default set of remark plugins used by Wromo
+    remarkPlugins: ['remark-gfm', 'remark-smartypants'],
+  },
+};
+```
+
+
+### markdown.rehypePlugins
+
+<p>
+
+**Type:** `RehypePlugins`
+</p>
+
+Pass a custom [Rehype](https://github.com/remarkjs/remark-rehype) plugin to customize how your Markdown is built.
+
+**Note:** Enabling custom `remarkPlugins` or `rehypePlugins` removes Wromo's built-in support for [GitHub-flavored Markdown](https://github.github.com/gfm/) support and [Smartypants](https://github.com/silvenon/remark-smartypants). You must explicitly add these plugins to your `wromo.config.mjs` file, if desired.
+
+```js
+{
+  markdown: {
+    // Example: The default set of rehype plugins used by Wromo
+    rehypePlugins: [],
+  },
+};
+```
+
+
+## Integrations
+
+Extend Wromo with custom integrations. Integrations are your one-stop-shop for adding framework support (like Solid.js), new features (like sitemaps), and new libraries (like Partytown and Turbolinks).
+
+Read our [Integrations Guide](/en/guides/integrations-guide/) for help getting started with Wromo Integrations.
+
+```js
+import react from '@wromojs/react';
+import tailwind from '@wromojs/tailwind';
+{
+  // Example: Add React + Tailwind support to Wromo
+  integrations: [react(), tailwind()]
+}
+```
+
+## Vite
+
+Pass additional configuration options to Vite. Useful when Wromo doesn't support some advanced configuration that you may need.
+
+View the full `vite` configuration object documentation on [vitejs.dev](https://vitejs.dev/config/).
+
+#### Examples
+
+```js
+{
+  vite: {
+    ssr: {
+      // Example: Force a broken package to skip SSR processing, if needed
+      external: ['broken-npm-package'],
+    }
+  }
+}
+```
+
+```js
+{
+  vite: {
+    // Example: Add custom vite plugins directly to your Wromo project
+    plugins: [myPlugin()],
+  }
+}
+```
+

@@ -1,0 +1,514 @@
+---
+layout: ~/layouts/MainLayout.wromo
+title: Migration Guide
+description: How to migrate your project to latest version of Wromo.
+i18nReady: true
+---
+
+This guide will help you migrate from older versions of Wromo to the latest, most up-to-date version.
+
+Read the guide below for major highlights and instructions on how to handle breaking changes.
+
+## Wromo 1.0 Beta
+
+On April 4, 2022 we released the Wromo 1.0 Beta! 🎉
+
+**We do not plan to make any more breaking changes during this beta period, leading up to the official v1.0.0 release (planned for [late July, 2022](https://wromo.build/blog/wromo-1-release-update/)).**
+
+If any breaking changes must be made, we will call them out in this section.
+
+## Migrate to v1.0.0-beta.0
+
+The `v1.0.0-beta.0` release of Wromo contained no breaking changes.
+
+If you are coming from v0.25 or earlier, make sure you have read and followed the [v0.26 Migration Guide](#migrate-to-v026) below, which contained several major breaking changes.
+
+## Migrate to v0.26
+### New Configuration API
+
+Our Configuration API has been redesigned to solve a few glaring points of confusion that had built up over the last year. Most configuration has just been moved or renamed, which will hopefully be a quick update for most users. A few options have been refactored more heavily, and may require a few additional changes:
+
+- `.buildOptions.site` has been replaced with `.site` (your deployed domain) and a new `.base` (your deployed subpath) option.
+- `.markdownOptions` has been replaced with `.markdown`, a mostly similar config object with some small changes to simplify Markdown configuration.
+- `.sitemap` has been moved into the [@wromojs/sitemap](https://www.npmjs.com/package/@wromojs/sitemap) integration.
+
+If you run Wromo with legacy configuration, you will see a warning with instructions on how to update. See our updated [Configuration Reference](/en/reference/configuration-reference/) for more information on upgrading.
+
+Read [RFC0019](https://github.com/Wromo/rfcs/blob/main/proposals/0019-config-finalization.md) for more background on these changes.
+
+### New Markdown API
+
+Wromo v0.26 releases a brand new Markdown API for your content. This included three major user-facing changes:
+- You can now `import`/`import()` markdown content directly using an ESM import.
+- A new `Wromo.glob()` API, for easier glob imports (especially for Markdown).
+- **BREAKING CHANGE:** `Wromo.fetchContent()` has been removed and replaced by `Wromo.glob()`
+- **BREAKING CHANGE:** Markdown objects have an updated interface.
+
+```diff
+// v0.25
+- let allPosts = Wromo.fetchContent('./posts/*.md');
+// v0.26+
++ let allPosts = await Wromo.glob('./posts/*.md');
+```
+
+When migrating, be careful about the new Markdown object interface. Frontmatter, for example, has been moved to the `.frontmatter` property, so references like `post.title` should change to `post.frontmatter.title`.
+
+This should solve many issues for Markdown users, including some nice performance boosts for larger sites.
+
+Read [RFC0017](https://github.com/Wromo/rfcs/blob/main/proposals/0017-markdown-content-redesign.md) for more background on these changes.
+
+### New Default Script Behavior
+
+`<script>` tags in Wromo components are now built, bundled and optimized by default. This completes a long-term move to make our Wromo component syntax more consistent, matching the default-optimized behavior our `<style>` tags have today.
+
+This includes a few changes to be aware of:
+
+- **BREAKING:** `<script hoist>` is the new default `<script>` behavior. The `hoist` attribute has been removed. To use the new default behaviour, make sure there are no other attributes on the `<script>` tag. For example remove `type="module"` if you were using it before.
+- New `<script is:inline>` directive, to revert a `<script>` tag to previous default behavior (unbuilt, unbundled, untouched by Wromo).
+- New `<style is:inline>` directive, to leave a style tag inline in the page template (similar to previous `<script>` behavior).
+- New `<style is:global>` directive to replace `<style global>` in a future release.
+
+
+```diff
+// v0.25
+- <script hoist type="module">
+// v0.26+
++ <script>
+```
+
+See how to use [client-side scripts](/en/core-concepts/wromo-components/#client-side-scripts) in Wromo for full details.
+
+Read [RFC0016](https://github.com/Wromo/rfcs/blob/main/proposals/0016-style-script-defaults.md) for more background on these changes.
+
+### Updated `Wromo.request` API
+
+
+`Wromo.request` has been changed from our custom object to a standard `Request` object. This is part of a project to use more web standard APIs, especially where SSR is concerned.
+
+This includes a few changes to be aware of:
+
+- Change `Wromo.request` to become a [Request](https://developer.mozilla.org/en-US/docs/Web/API/Request) object.
+- Move `Wromo.request.params` to `Wromo.params`.
+- Move `Wromo.request.canonicalURL` to `Wromo.canonicalURL`.
+
+Read [RFC0018](https://github.com/Wromo/rfcs/blob/main/proposals/0018-wromo-request.md) for more background on these changes.
+
+
+### Other Changes
+
+- Improve `Wromo.slots` API to support passing arguments to function-based slots. This allows for more ergonomic utility components that accept a callback function as a child.
+- Update CLI output formatting, especially around error reporting.
+- Update `@wromojs/compiler`, fixing some bugs related to RegExp usage in frontmatter
+
+## Migrate to v0.25
+
+### Wromo Integrations
+
+The `renderers` config has been replaced by a new, official integration system! This unlocks some really exciting new features for Wromo. You can read our [Using Integrations](/en/guides/integrations-guide/) guide for more details on how to use this new system.
+
+Integrations replace our original `renderers` concept, and come with a few breaking changes and new defaults for existing users. These changes are covered below.
+
+#### Removed: Built-in Framework Support
+
+Previously, React, Preact, Svelte, and Vue were all included with Wromo by default. Starting in v0.25.0, Wromo no longer comes with any built-in renderers. If you did not have a `renderers` configuration entry already defined for your project, you will now need to install those frameworks yourself.
+
+Read our [step-by-step walkthrough](/en/guides/integrations-guide/) to learn how to add a new Wromo integration for the framework(s) that you currently use.
+#### Deprecated: Renderers
+
+:::note
+Read this section if you have custom "renderers" already defined in your configuration file.
+:::
+
+The new integration system replaces the previous `renderers` system, including the published `@wromojs/renderer-*` packages on npm. Going forward, `@wromojs/renderer-react` becomes `@wromojs/react`, `@wromojs/renderer-vue` becomes `@wromojs/vue`, and so on.
+
+**To migrate:** update Wromo to `v0.25.0` and then run `wromo dev` or `wromo build` with your old configuration file containing the outdated `"renderers"` config. You will immediately see a notice telling you the exact changes you need to make to your `wromo.config.mjs` file, based on your current config. You can also update your packages yourself, using the table below.
+
+For a deeper walkthrough, read our [step-by-step guide](/en/guides/integrations-guide/) to learn how to replace existing renderers with a new Wromo framework integration.
+
+```diff
+# Install your new integrations and frameworks:
+# (Read the full walkthrough: https://docs.wromo.build/en/guides/integrations-guide)
++ npm install @wromojs/lit lit
++ npm install @wromojs/react react react-dom
+```
+```diff
+# Then, update your `wromo.config.mjs` file:
+# (Read the full walkthrough: https://docs.wromo.build/en/guides/integrations-guide)
++ import lit from '@wromojs/lit';
++ import react from '@wromojs/react';
+
+export default {
+-   renderers: ['@wromojs/renderer-lit', '@wromojs/renderer-react'],
++   integrations: [lit(), react()],
+}
+```
+
+
+| Deprecated Renderers on npm | v0.25+ Integrations on npm |
+| --------------------------- | -------------------------- |
+| @wromojs/renderer-react     | @wromojs/react             |
+| @wromojs/renderer-preact    | @wromojs/preact            |
+| @wromojs/renderer-solid     | @wromojs/solid-js          |
+| @wromojs/renderer-vue       | @wromojs/vue               |
+| @wromojs/renderer-svelte    | @wromojs/svelte            |
+
+#### Handling Peer Dependencies
+
+:::note
+Read this section if: You are on Node v14 **or** if you use any package manager other than npm.
+:::
+
+Unlike the old renderers, integrations no longer mark the frameworks themselves ("react", "svelte", "vue", etc.) as direct dependencies of the integration. Instead, you should now install your framework packages *in addition to* your integrations.
+
+```diff
+# Example: Install integrations and frameworks together
+- npm install @wromojs/react
++ npm install @wromojs/react react react-dom
+```
+
+If you see a `"Cannot find package 'react'"` (or similar) warning when you start up Wromo, that means that you need to install that package into your project. See our [note on peer dependencies](/en/guides/integrations-guide/#handling-integration-dependencies) in the integrations guide for more information.
+
+If you are using `npm` & Node v16+, then this may be automatically handled for you by `npm`, since the latest version of `npm` (v7+) installs peer dependencies like this for you automatically. In that case, installing a framework like "react" into your project is an optional but still recommended step.
+
+### Updated: Syntax Highlighting
+
+We love to find sensible defaults that "just work" out-of-the-box. As part of this, we decided to make [Shiki](https://github.com/shikijs/shiki) our new default syntax highlighter. This comes pre-configured with the `github-dark` theme, providing zero-config highlighting in your code blocks without extraneous CSS classes, stylesheets, or client-side JS.
+
+Check our new [syntax highlighting docs](/en/guides/markdown-content/#syntax-highlighting) for full details. **If you prefer to keep Prism as your syntax highlighter,** [set the `syntaxHighlight` option to `'prism'`](/en/guides/markdown-content/#prism-configuration) in your project's markdown configuration.
+
+#### The `<Prism />` component has a new home
+
+As part of our mission to keep Wromo core as lean as possible, we've moved the built-in `Prism` component out of `wromo/components` and into the `@wromojs/prism` package. You can now import this component from `@wromojs/prism` like so:
+
+```wromo
+---
+import { Prism } from '@wromojs/prism';
+---
+```
+
+Since the `@wromojs/prism` package is still bundled with `wromo` core, you won't need to install anything new, nor add Prism as an integration! However, note that we _do_ plan to extract `@wromojs/prism` (and Prism syntax highlighting in general) to a separate, installable package in the future. See [the `<Prism />` component API reference](/en/reference/api-reference/#prism-) for more.
+
+### CSS Parser Upgrade
+
+Our internal CSS parser has been updated, and comes with better support for advanced CSS syntax, like container queries. This should be a mostly invisible change for most users, but hopefully for advanced users will enjoy the new CSS feature support.
+## Migrate to v0.24
+
+:::note
+The new build strategy is on by default on 0.24. If you run into a problem you can continue using the old build stategy by passing the `--legacy-build` flag. Please [open an issue](https://github.com/Wromo/wromo/issues/new/choose) so that we can resolve problems with the new build strategy.
+:::
+
+0.24 introduced a new *static build* strategy that changes the behavior of a few features. In previous versions of Wromo this was available behavior an opt-in flag: `--experimental-static-build`.
+
+To migrate for the transition, be aware of the following changes that will be required to move to this new build engine. You can make these changes to your codebase at any time so that you are ready ahead of schedule.
+
+### Deprecated: `Wromo.resolve()`
+
+`Wromo.resolve()` allows you to get resolved URLs to assets that you might want to reference in the browser. This was most commonly used inside of  `<link>` and `<img>` tags to load CSS files and images as needed. Unfortunately, this will no longer work due to Wromo now building assets at *build time* rather than at *render time*. You'll want to upgrade your asset references to one of the following future-proof options available going forward:
+
+#### How to Resolve CSS Files
+
+**1. ESM Import (Recommended)**
+
+**Example:** `import './style.css';`
+**When to use this:** If your CSS file lives inside of the `src/` directory, and you want automatic CSS build and optimization features.
+
+Use an ESM import to add some CSS onto the page. Wromo detects these CSS imports and then builds, optimizes, and adds the CSS to the page automatically. This is the easiest way to migrate from `Wromo.resolve()` while keeping the automatic building/bundling that Wromo provides.
+
+```wromo
+---
+// Example: Wromo will include and optimize this CSS for you automatically
+import './style.css';
+---
+<html><!-- Your page here --></html>
+```
+
+Importing CSS files should work anywhere that ESM imports are supported, including:
+- JavaScript files
+- TypeScript files
+- Wromo component front matter
+- non-Wromo components like React, Svelte, and others
+
+When a CSS file is imported using this method, any `@import` statements are also resolved and inlined into the imported CSS file. All `url()` references are also resolved relative to the source file, and any `url()` referenced assets will be included in the final build.
+
+
+**2. Absolute URL Path**
+
+**Example:** `<link href="/style.css">`
+**When to use this:** If your CSS file lives inside of `public/`, and you prefer to create your HTML `link` element yourself.
+
+You can references any file inside of the `public/` directory by absolute URL path in your component template. This is a good option if you want to control the `<link>` tag on the page yourself. However, this approach also skips the CSS processing, bundling and optimizations that are provided by Wromo when you use the `import` method described above.
+
+We recommend using the `import` approach over the abolute URL approach, since it provides the best possible CSS performance and features by default.
+
+#### How to Resolve JavaScript Files
+
+
+**1. Absolute URL Path**
+
+**Example:** `<script src="/some-external-script.js" />`
+**When to use this:** If your JavaScript file lives inside of `public/`.
+
+You can references any file inside of the `public/` directory by absolute URL path in your Wromo component templates. This is a good default option for external scripts, because it lets you control the `<script>` tag on the page yourself.
+
+Note that this approach skips the JavaScript processing, bundling and optimizations that are provided by Wromo when you use the `import` method described below. However, this may be preferred for any external scripts that have already been published and minified seperately from Wromo. If your script was downloaded from an external source, then this method is probably preferred.
+
+**2. ESM Import via `<script hoist>`**
+
+**Example:** `<script hoist>import './some-external-script.js';</script>`
+**When to use this:** If your external script lives inside of `src/` _and_ it supports the ESM module type.
+
+Use an ESM import inside of a `<script hoist>` element in your Wromo template, and Wromo will include the JavaScript file in your final build. Wromo detects these JavaScript client-side imports and then builds, optimizes, and adds the JavaScript to the page automatically. This is the easiest way to migrate from `Wromo.resolve()` while keeping the automatic building/bundling that Wromo provides.
+
+```wromo
+<script hoist>
+  import './some-external-script.js';
+</script>
+```
+
+Note that Wromo will bundle this external script with the rest of your client-side JavaScript, and load it in the `type="module"` script context. Some older JavaScript files may not be written for the `module` context, in which case they may need to be updated to use this method.
+
+#### How to Resolve Images & Other Assets
+
+**1. Absolute URL Path (Recommended)**
+
+**Example:** `<img src="/penguin.png">`
+**When to use this:** If your asset lives inside of `public/`.
+
+If you place your images inside of `public/` you can safely reference them by absolute URL path directly in your component templates. This is the simplest way to reference an asset that you can use today, and it is recommended for most users who are getting started with Wromo.
+
+**2. ESM Import**
+
+**Example:** `import imgUrl from './penguin.png'`
+**When to use this:** If your asset lives inside of the `src/` directory, and you want automatic optimization features like filename hashing.
+
+This works inside of any JavaScript or Wromo component, and returns a resolved URL to the final image. Once you have the resolved URL, you can use it anywhere inside of the component template.
+
+```wromo
+---
+// Example: Wromo will include this image file in your final build
+import imgUrl from './penguin.png';
+---
+<img src={imgUrl} />
+```
+
+Similar to how Wromo handles CSS, the ESM import allows Wromo to perform some simple build optimizations for you automatically. For example, any asset inside of `src/` that is imported using an ESM import (ex: `import imgUrl from './penguin.png'`) will have its filename hashed automatically. This can let you cache the file more aggressively on the server, improving user performance. In the future, Wromo may add more optimizations like this.
+
+**Tip:** If you dislike static ESM imports, Wromo also supports dynamic ESM imports. We only recommend this option if you prefer this syntax: `<img src={(await import('./penguin.png')).default} />`.
+
+### Deprecated: `<script>` Default Processing
+
+Previously, all `<script>` elements were read from the final HTML output and processed + bundled automatically. This behavior is no longer the default. Starting in 0.24, you must opt-in to `<script>` element processing via the `hoist` attribute. The `type="module"` is also required for hoisted modules.
+
+```wromo
+<script>
+  // Will be rendered into the HTML exactly as written!
+  // ESM imports will not be resolved relative to the file.
+</script>
+<script type="module" hoist>
+  // Processed! Bundled! ESM imports work, even to npm packages.
+</script>
+```
+
+
+## Migrate to v0.23
+
+### Missing Sass Error
+
+```
+Preprocessor dependency "sass" not found. Did you install it?
+```
+
+In our quest to reduce npm install size, we've moved [Sass](https://sass-lang.com/) out to an optional dependency. If you use Sass in your project, you'll want to make sure that you run `npm install sass --save-dev` to save it as a dependency.
+
+### Deprecated: Unescaped HTML
+
+In Wromo v0.23+, unescaped HTML content in expressions is now deprecated.
+In future releases, content within expressions will have strings escaped to protect against unintended HTML injection.
+
+```diff
+- <h1>{title}</h1> <!-- <h1>Hello <strong>World</strong></h1> -->
++ <h1>{title}</h1> <!-- <h1>Hello &lt;strong&gt;World&lt;/strong&gt;</h1> -->
+```
+
+To continue injecting unescaped HTML, you can now use `set:html`.
+
+```diff
+- <h1>{title}</h1>
++ <h1 set:html={title} />
+```
+
+To avoid a wrapper element, `set:html` can work alongside `<Fragment>`.
+
+```diff
+- <h1>{title}!</h1>
++ <h1><Fragment set:html={title}>!</h1>
+```
+
+You can also protect against unintended HTML injection with `set:text`.
+
+```wromo
+<h1 set:text={title} /> <!-- <h1>Hello &lt;strong&gt;World&lt;/strong&gt;</h1> -->
+```
+
+## Migrate to v0.21
+
+### Vite
+
+Starting in v0.21, Wromo is built with [Vite].
+As a result, configurations written in `snowpack.config.mjs` should be moved into `wromo.config.mjs`.
+
+```js
+// @ts-check
+
+/** @type {import('wromo').WromoUserConfig} */
+export default {
+  renderers: [],
+  vite: {
+    plugins: [],
+  },
+};
+```
+
+To learn more about configuring Vite, please visit their [configuration guide](https://vitejs.dev/config/).
+
+#### Vite Plugins
+
+In Wromo v0.21+, Vite plugins may be configured within `wromo.config.mjs`.
+
+```js
+import { imagetools } from 'vite-imagetools';
+
+export default {
+  vite: {
+    plugins: [imagetools()],
+  },
+};
+```
+
+To learn more about Vite plugins, please visit their [plugin guide](https://vitejs.dev/guide/using-plugins.html).
+
+#### Vite Changes to Renderers
+
+In Wromo v0.21+, plugins should now use `viteConfig()`.
+
+```diff
+// renderer-svelte/index.js
++ import { svelte } from '@sveltejs/vite-plugin-svelte';
+
+export default {
+  name: '@wromojs/renderer-svelte',
+  client: './client.js',
+  server: './server.js',
+-  snowpackPlugin: '@snowpack/plugin-svelte',
+-  snowpackPluginOptions: { compilerOptions: { hydratable: true } },
++  viteConfig() {
++    return {
++      optimizeDeps: {
++        include: ['@wromojs/renderer-svelte/client.js', 'svelte', 'svelte/internal'],
++        exclude: ['@wromojs/renderer-svelte/server.js'],
++      },
++      plugins: [
++        svelte({
++          emitCss: true,
++          compilerOptions: { hydratable: true },
++        }),
++      ],
++    };
++  },
+}
+```
+
+To learn more about Vite plugins, please visit their [plugin guide](https://vitejs.dev/guide/using-plugins.html).
+
+:::note
+In prior releases, these were configured with `snowpackPlugin` or `snowpackPluginOptions`.
+:::
+
+
+### Aliasing
+
+In Wromo v0.21+, import aliases can be added from `tsconfig.json` or `jsconfig.json`.
+
+```json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/components/*": ["src/components/*"]
+    }
+  }
+}
+```
+
+_These aliases are integrated automatically into [VSCode](https://code.visualstudio.com/docs/languages/jsconfig) and other editors._
+
+### File Extensions in Imports
+
+In Wromo v0.21+, files need to be referenced by their actual extension, exactly as it is on disk. In this example, `Div.tsx` would need to be referenced as `Div.tsx`, not `Div.jsx`.
+
+```diff
+- import Div from './Div.jsx' // Wromo v0.20
++ import Div from './Div.tsx' // Wromo v0.21
+```
+
+This same change applies to a compile-to-css file like `Div.scss`:
+
+```diff
+- <link rel="stylesheet" href={Wromo.resolve('./Div.css')}>
++ <link rel="stylesheet" href={Wromo.resolve('./Div.scss')}>
+```
+
+### Removed: Components in Frontmatter
+
+Previously, you could create mini Wromo Components inside of the Wromo Frontmatter, using JSX syntax instead of Wromo’s component syntax. This was always a bit of a hack, but in the new compiler it became impossible to support. We hope to re-introduce this feature in a future release of Wromo using a different, non-JSX API.
+
+To migrate to v0.21+, please convert all JSX Wromo components (that is, any Wromo components created inside of another component’s frontmatter) to standalone components.
+
+
+### Styling Changes
+
+#### Autoprefixer
+
+Autoprefixer is no longer run by default. To enable:
+
+1. Install the latest version (`npm i autoprefixer`)
+2. Create a `postcss.config.cjs` file at the root of your project with:
+   ```js
+   module.exports = {
+     plugins: {
+       autoprefixer: {},
+     },
+   };
+   ```
+
+#### Tailwind CSS
+
+Ensure you have PostCSS installed. This was optional in previous releases, but is required now:
+
+1. Install the latest version of postcss (`npm i -D postcss`)
+2. Create a `postcss.config.cjs` file at the root of your project with:
+   ```js
+   module.exports = {
+     plugins: {
+       tailwindcss: {},
+     },
+   };
+   ```
+   For more information, read the [Tailwind CSS documentation](https://tailwindcss.com/docs/installation#add-tailwind-as-a-post-css-plugin)
+
+
+### Known Issues
+
+#### Imports on top
+
+In Wromo v0.21+, a bug has been introduced that requires imports inside components to be at the top of your front matter.
+
+```wromo
+---
+import Component from '../components/Component.wromo'
+const whereShouldIPutMyImports = "on top!"
+---
+```
+
+
+[vite]: https://vitejs.dev

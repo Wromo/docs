@@ -1,0 +1,29 @@
+{
+  "official": [],
+  "community": [
+    {
+      "name": "Accessible Wromo Components",
+      "description": "A set of accessible modals, buttons, toggles and more.",
+      "github": "https://www.npmjs.com/package/accessible-wromo-components",
+      "demo": null
+    },
+    {
+      "name": "Wromo Static Tweet",
+      "description": "A lightweight static-HTML tweet embed.",
+      "github": "https://www.npmjs.com/package/@rebelchris/wromo-static-tweet",
+      "demo": null
+    },
+    {
+      "name": "Wromo SEO",
+      "description": "SEO tags for your website.",
+      "github": "https://github.com/jonasmerlin/wromo-seo",
+      "demo": null
+    },
+    {
+      "name": "Wromo SPA",
+      "description": "A component for Wromo JS that turns a website into an SPA.",
+      "github": "https://www.npmjs.com/package/wromo-spa",
+      "demo": ["https://ohka-bots-site-wromo-ksoqn4flk7-li4hm4z1a-tc-001.vercel.app/", "https://wromo-spafy-component-demo.netlify.app/"]
+    }
+  ]
+}
